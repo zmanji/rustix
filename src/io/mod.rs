@@ -11,9 +11,12 @@ pub(crate) use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 #[cfg(target_os = "wasi")]
 pub(crate) use std::os::wasi::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
+#[cfg(any(linux_raw, all(libc, any(target_os = "android", target_os = "linux"))))]
+pub mod epoll;
+
 mod close;
 mod error;
-#[cfg(any(target_os = "android", target_os = "linux"))]
+#[cfg(any(linux_raw, all(libc, any(target_os = "android", target_os = "linux"))))]
 mod eventfd;
 mod fd;
 mod ioctl;
@@ -27,14 +30,16 @@ mod pipe;
 mod poll;
 #[cfg(any(target_os = "android", target_os = "linux"))]
 mod procfs;
+#[cfg(any(linux_raw, all(libc, any(target_os = "android", target_os = "linux"))))]
+mod raw_epoll;
 mod read_write;
 mod stdio;
-#[cfg(any(target_os = "android", target_os = "linux"))]
+#[cfg(any(linux_raw, all(libc, any(target_os = "android", target_os = "linux"))))]
 mod userfaultfd;
 
 pub use close::close;
 pub use error::{Error, Result};
-#[cfg(any(target_os = "android", target_os = "linux"))]
+#[cfg(any(linux_raw, all(libc, any(target_os = "android", target_os = "linux"))))]
 pub use eventfd::{eventfd, EventfdFlags};
 #[cfg(not(target_os = "redox"))]
 pub use fd::ioctl_fionread;
@@ -45,8 +50,6 @@ pub use fd::isatty;
 pub use fd::ttyname;
 #[cfg(not(target_os = "wasi"))]
 pub use fd::{dup, dup2, dup2_with, DupFlags};
-#[cfg(any(target_os = "android", target_os = "linux"))]
-pub use imp::io::epoll;
 #[cfg(any(target_os = "ios", target_os = "macos"))]
 pub use ioctl::ioctl_fioclex;
 pub use ioctl::ioctl_fionbio;
@@ -69,6 +72,11 @@ pub use pipe::{pipe_with, PipeFlags};
 pub use poll::{PollFd, PollFdVec, PollFlags};
 #[cfg(any(target_os = "android", target_os = "linux"))]
 pub use procfs::{proc, proc_self, proc_self_fd};
+#[cfg(any(linux_raw, all(libc, any(target_os = "android", target_os = "linux"))))]
+pub use raw_epoll::{
+    epoll_add, epoll_create, epoll_del, epoll_mod, epoll_wait, epoll_wait_raw, EpollCreateFlags,
+    EpollEvent, EpollEventExt, EpollEventFlags,
+};
 pub use read_write::{pread, pwrite, read, readv, write, writev};
 #[cfg(not(target_os = "redox"))]
 pub use read_write::{preadv, pwritev};

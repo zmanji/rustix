@@ -34,7 +34,7 @@ use super::fs::{
     OFlags, RenameFlags, ResolveFlags, Stat, StatFs, StatxFlags,
 };
 use super::io::{
-    epoll, Advice as IoAdvice, DupFlags, EventfdFlags, MapFlags, PipeFlags, PollFd, ProtFlags,
+    Advice as IoAdvice, DupFlags, EventfdFlags, MapFlags, PipeFlags, PollFd, ProtFlags,
     ReadWriteFlags, UserfaultfdFlags,
 };
 #[cfg(not(target_os = "wasi"))]
@@ -49,6 +49,7 @@ use super::reg::nr;
 use super::reg::{ArgReg, SocketArg};
 use super::time::{ClockId, Timespec};
 use crate::io;
+use crate::io::EpollCreateFlags;
 use crate::io::{OwnedFd, RawFd};
 use crate::time::NanosleepRelativeResult;
 use io_lifetimes::{AsFd, BorrowedFd};
@@ -2905,7 +2906,7 @@ pub(crate) fn is_read_write(fd: BorrowedFd<'_>) -> io::Result<(bool, bool)> {
 }
 
 #[inline]
-pub(crate) fn epoll_create(flags: epoll::CreateFlags) -> io::Result<OwnedFd> {
+pub(crate) fn epoll_create(flags: EpollCreateFlags) -> io::Result<OwnedFd> {
     unsafe { ret_owned_fd(syscall1(nr(__NR_epoll_create1), c_uint(flags.bits()))) }
 }
 
@@ -2951,14 +2952,14 @@ pub(crate) unsafe fn epoll_del(epfd: BorrowedFd<'_>, fd: c_int) -> io::Result<()
 }
 
 #[inline]
-pub(crate) fn epoll_wait(
+pub(crate) unsafe fn epoll_wait_raw(
     epfd: BorrowedFd<'_>,
     events: *mut epoll_event,
     num_events: usize,
     timeout: c_int,
 ) -> io::Result<usize> {
     #[cfg(not(any(target_arch = "aarch64", target_arch = "riscv64")))]
-    unsafe {
+    {
         ret_usize(syscall4(
             nr(__NR_epoll_wait),
             borrowed_fd(epfd),
@@ -2968,7 +2969,7 @@ pub(crate) fn epoll_wait(
         ))
     }
     #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
-    unsafe {
+    {
         ret_usize(syscall5(
             nr(__NR_epoll_pwait),
             borrowed_fd(epfd),

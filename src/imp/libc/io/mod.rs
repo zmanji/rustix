@@ -3,7 +3,8 @@ mod poll_fd;
 mod types;
 
 #[cfg(any(target_os = "android", target_os = "linux"))]
-pub mod epoll;
+pub(crate) mod raw_epoll;
+
 pub use error::Error;
 pub use poll_fd::{PollFd, PollFlags};
 #[cfg(not(any(target_os = "redox", target_os = "wasi")))]

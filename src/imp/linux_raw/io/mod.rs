@@ -1,6 +1,6 @@
-pub mod epoll;
 pub(super) mod error;
 mod poll_fd;
+pub(crate) mod raw_epoll;
 mod types;
 
 pub use error::Error;

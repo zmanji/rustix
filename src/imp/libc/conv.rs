@@ -59,6 +59,16 @@ pub(super) fn ret_c_int(raw: c_int) -> io::Result<c_int> {
 }
 
 #[inline]
+pub(super) fn ret_usize(raw: c_int) -> io::Result<usize> {
+    if raw == -1 {
+        Err(io::Error::last_os_error())
+    } else {
+        assert!(raw >= 0);
+        Ok(raw as usize)
+    }
+}
+
+#[inline]
 pub(super) fn ret_u32(raw: c_int) -> io::Result<u32> {
     if raw == -1 {
         Err(io::Error::last_os_error())

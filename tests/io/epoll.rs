@@ -1,7 +1,7 @@
 #![cfg(any(target_os = "android", target_os = "linux"))]
 
 use io_lifetimes::AsFd;
-use rsix::io::epoll::{self, Epoll};
+use rsix::io::epoll;
 use rsix::io::{ioctl_fionbio, read, write};
 use rsix::net::{
     accept, bind_v4, connect_v4, getsockname, listen, socket, AddressFamily, Ipv4Addr, Protocol,
@@ -30,7 +30,7 @@ fn server(ready: Arc<(Mutex<u16>, Condvar)>) {
         cvar.notify_all();
     }
 
-    let epoll = Epoll::new(epoll::CreateFlags::CLOEXEC, epoll::Owning::new()).unwrap();
+    let epoll = epoll::Set::new(epoll::CreateFlags::CLOEXEC, epoll::Owning::new()).unwrap();
 
     let raw_listen_sock = listen_sock.as_fd().as_raw_fd();
     epoll.add(listen_sock, epoll::EventFlags::IN).unwrap();

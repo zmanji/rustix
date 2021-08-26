@@ -8,6 +8,8 @@
     target_os = "wasi",
 )))]
 use super::conv::ret_u32;
+#[cfg(any(target_os = "android", target_os = "linux"))]
+use super::conv::ret_usize;
 use super::conv::{
     borrowed_fd, ret, ret_c_int, ret_discarded_fd, ret_off_t, ret_owned_fd, ret_ssize_t,
 };
@@ -85,6 +87,7 @@ use super::rand::GetRandomFlags;
 use super::time::Timespec;
 use crate::as_ptr;
 use crate::io::{self, OwnedFd, RawFd};
+use crate::io::{EpollCreateFlags, EpollEvent};
 use errno::errno;
 use io_lifetimes::{AsFd, BorrowedFd};
 use std::cmp::min;
@@ -1986,4 +1989,64 @@ pub(crate) fn sched_yield() {
     unsafe {
         let _ = libc::sched_yield();
     }
+}
+
+#[inline]
+pub(crate) fn epoll_create(flags: EpollCreateFlags) -> io::Result<OwnedFd> {
+    unsafe { ret_owned_fd(libc::epoll_create(flags.bits())) }
+}
+
+#[inline]
+pub(crate) unsafe fn epoll_add(
+    epfd: BorrowedFd<'_>,
+    fd: c_int,
+    event: &EpollEvent,
+) -> io::Result<()> {
+    let mut event = *event;
+    ret(libc::epoll_ctl(
+        borrowed_fd(epfd),
+        libc::EPOLL_CTL_ADD,
+        fd,
+        &mut event,
+    ))
+}
+
+#[inline]
+pub(crate) unsafe fn epoll_mod(
+    epfd: BorrowedFd<'_>,
+    fd: c_int,
+    event: &EpollEvent,
+) -> io::Result<()> {
+    let mut event = *event;
+    ret(libc::epoll_ctl(
+        borrowed_fd(epfd),
+        libc::EPOLL_CTL_MOD,
+        fd,
+        &mut event,
+    ))
+}
+
+#[inline]
+pub(crate) unsafe fn epoll_del(epfd: BorrowedFd<'_>, fd: c_int) -> io::Result<()> {
+    ret(libc::epoll_ctl(
+        borrowed_fd(epfd),
+        libc::EPOLL_CTL_DEL,
+        fd,
+        null_mut(),
+    ))
+}
+
+#[inline]
+pub(crate) unsafe fn epoll_wait_raw(
+    epfd: BorrowedFd<'_>,
+    events: *mut EpollEvent,
+    num_events: usize,
+    timeout: c_int,
+) -> io::Result<usize> {
+    ret_usize(libc::epoll_wait(
+        borrowed_fd(epfd),
+        events,
+        num_events.try_into().map_err(|_| io::Error::INVAL)?,
+        timeout,
+    ))
 }
