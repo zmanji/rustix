@@ -80,7 +80,7 @@ unsafe impl ioctl::Ioctl for Ficlone<'_> {
     const OPCODE: ioctl::Opcode = ioctl::Opcode::old(c::FICLONE as ioctl::RawOpcode);
 
     fn as_ptr(&mut self) -> *mut c::c_void {
-        self.0.as_raw_fd() as *mut c::c_void
+        core::ptr::invalid_mut(self.0.as_raw_fd() as usize)
     }
 
     unsafe fn output_from_ptr(

@@ -263,10 +263,10 @@ unsafe fn init_from_aux_iter(aux_iter: impl Iterator<Item = Elf_auxv_t>) -> Opti
 
     for Elf_auxv_t { a_type, a_val } in aux_iter {
         match a_type as _ {
-            AT_PAGESZ => pagesz = a_val as usize,
-            AT_CLKTCK => clktck = a_val as usize,
-            AT_HWCAP => hwcap = a_val as usize,
-            AT_HWCAP2 => hwcap2 = a_val as usize,
+            AT_PAGESZ => pagesz = a_val.addr(),
+            AT_CLKTCK => clktck = a_val.addr(),
+            AT_HWCAP => hwcap = a_val.addr(),
+            AT_HWCAP2 => hwcap2 = a_val.addr(),
             AT_EXECFN => execfn = check_raw_pointer::<c::c_char>(a_val as *mut _)?.as_ptr(),
             AT_SYSINFO_EHDR => sysinfo_ehdr = check_elf_base(a_val as *mut _)?.as_ptr(),
 
@@ -277,11 +277,11 @@ unsafe fn init_from_aux_iter(aux_iter: impl Iterator<Item = Elf_auxv_t>) -> Opti
             #[cfg(feature = "runtime")]
             AT_PHDR => phdr = check_raw_pointer::<Elf_Phdr>(a_val as *mut _)?.as_ptr(),
             #[cfg(feature = "runtime")]
-            AT_PHNUM => phnum = a_val as usize,
+            AT_PHNUM => phnum = a_val.addr(),
             #[cfg(feature = "runtime")]
-            AT_PHENT => phent = a_val as usize,
+            AT_PHENT => phent = a_val.addr(),
             #[cfg(feature = "runtime")]
-            AT_ENTRY => entry = a_val as usize,
+            AT_ENTRY => entry = a_val.addr(),
 
             AT_NULL => break,
             _ => (),
@@ -388,7 +388,7 @@ struct Elf_auxv_t {
     // Some of the values in the auxv array are pointers, so we make `a_val` a
     // pointer, in order to preserve their provenance. For the values which are
     // integers, we cast this to `usize`.
-    a_val: *const c_void,
+    a_val: *mut c_void,
 }
 
 // Aux reading utilities

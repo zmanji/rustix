@@ -194,7 +194,7 @@ unsafe impl ioctl::Ioctl for Tiocgptpeer {
     const OPCODE: ioctl::Opcode = ioctl::Opcode::old(c::TIOCGPTPEER as ioctl::RawOpcode);
 
     fn as_ptr(&mut self) -> *mut c::c_void {
-        self.0.bits() as *mut c::c_void
+        core::ptr::invalid_mut(self.0.bits() as usize)
     }
 
     unsafe fn output_from_ptr(
