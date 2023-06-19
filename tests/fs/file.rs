@@ -93,10 +93,12 @@ fn test_file() {
         rustix::fs::OFlags::from_bits_truncate(rustix::fs::fcntl_getfl(&file).unwrap().bits()),
         rustix::fs::OFlags::empty()
     );
+    // `libc::O_LARGEFILE` is sometimes defined to 0, so test the
+    // kernel's `O_LARGEFILE` value.
     #[cfg(linux_kernel)]
     assert_eq!(
         rustix::fs::fcntl_getfl(&file).unwrap(),
-        rustix::fs::OFlags::from_bits_retain(libc::O_LARGEFILE as _)
+        rustix::fs::OFlags::from_bits_retain(linux_raw_sys::general::O_LARGEFILE as _)
     );
 
     let stat = rustix::fs::fstat(&file).unwrap();
